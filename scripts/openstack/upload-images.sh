@@ -53,3 +53,11 @@ wait
 
 openstack image set --public --os-distro ubuntu jammy-server-cloudimg-amd64
 openstack image set --public --os-distro fedora fedora-coreos-38.20230806.3.0-openstack.x86_64
+
+pass=$(cat ~/hetzner-storagebox.pass)
+if ! mount | grep -q /mnt/winshare; then
+  mkdir -p /mnt/winshare
+  mount.cifs -o user=u429780,pass=$pass //u429780.your-storagebox.de/backup /mnt/winshare/
+fi
+
+openstack image create --public --property os_distro=windows --file /mnt/winshare/Win2022_20241024.raw --progress Win2022_20241024
