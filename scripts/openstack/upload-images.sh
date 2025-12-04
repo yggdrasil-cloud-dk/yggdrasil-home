@@ -40,21 +40,51 @@ for image_url in ${image_urls[@]}; do
 		image_name=$(echo $image_name | grep -o ".*\." | head -c -2)
 		pipe_cmd="gunzip -cd"
 	fi
-	openstack image show $image_name || echo "$(
+	openstack image show $image_name || (
 			echo ========== $image_name ===========
 			(curl $image_url --output - || exit 1) | $pipe_cmd | cat - > $image_name.$image_format
 			qemu-img convert $image_name.$image_format $image_name.raw
-			openstack image create --progress $image_name --file $image_name.raw
-			rm -f $image_name*
-		)" &
+			if [[ "$image_url" == *jammy* ]]; then
+				mkdir -p /mnt/openstack-image-mods
+				losetup -fP $image_name.raw
+				loop_dev=$(losetup | grep $image_name.raw | awk '{print $1}' | cut -d '/' -f 3)
+				loop_part=$(lsblk -l | grep ${loop_dev}p | grep G | awk '{print $1}')
+                	        (
+					set -xe 
+					mount /dev/$loop_part /mnt/openstack-image-mods
+					chroot /mnt/openstack-image-mods bash -s <<-EOF
+					set -x
+					mkdir -p /run/systemd/resolve/
+					echo nameserver 8.8.8.8 > /run/systemd/resolve/stub-resolv.conf
+					# CHANGES START
+					apt update
+					DEBIAN_FRONTEND=noninteractive apt install -y \
+						-o Dpkg::Options::="--force-confold" --force-yes \
+						qemu-guest-agent python3-pip
+					sed -i 's/disable_root: true/disable_root: false\nssh_pwauth: true\nchpasswd:\n  expire: false/'  /etc/cloud/cloud.cfg
+					# CHANGES END
+					rm -rf /run/systemd/resolve/
+					EOF
+					openstack image create --progress $image_name --file $image_name.raw
+					rm -f $image_name*
+				)
+				umount /mnt/openstack-image-mods
+				losetup -d /dev/$loop_dev
+				rm -rf /mnt/openstack-image-mods
+			else
+				openstack image create --progress $image_name --file $image_name.raw
+				rm -f $image_name*
+			fi
+		) &
 done
 
 wait
 
 openstack image set --public \
   --os-distro ubuntu --property os_type=linux --property os_version=22.04 \
-  --property os_admin_user=root \
+  --property os_admin_user=root  --property hw_qemu_guest_agent=yes \
   jammy-server-cloudimg-amd64
+
 openstack image set --public \
   --os-distro fedora --property os_type=linux --property os_version=38 \
   --property os_admin_user=root \
