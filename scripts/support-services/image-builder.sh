@@ -1,3 +1,4 @@
+#!/bin/bash
 
 set -xe
 
@@ -7,6 +8,7 @@ create_network_and_subnet () {
 	openstack network show $network_name || openstack network create $network_name
 	openstack subnet show $subnet_name || openstack subnet create $subnet_name --dns-nameserver 8.8.8.8  --allocation-pool ${subnet_range} --network $network_name --subnet-range ${subnet_cidr}
 }
+
 
 network_name=image-builder_net
 subnet_name=image-builder_subnet
@@ -173,4 +175,18 @@ while ! [[ $(openstack server show $vm_name -f value -c status) == ACTIVE ]]; do
 
 openstack volume show $volume_name -f value -c status | grep -q available && \
 openstack server add volume $vm_name $volume_name
+
+ssh-keygen -f "/root/.ssh/known_hosts" -R $fip
+
+sleep 300
+ssh_cmd="sshpass -p ubuntu ssh -o StrictHostKeyChecking=no ubuntu@$fip"
+$ssh_cmd 'while ! ls -d /var/lib/libvirt/packer/packer-Win2022; do echo "==> Packer repo not cloned yet.. waiting"; sleep 120; done'
+$ssh_cmd 'echo ==> Packer repo exists'
+$ssh_cmd 'while ! ps aux | grep -q qemu-system; do echo "==> VM not started yet.. waiting"; sleep 120; done'
+$ssh_cmd 'echo ==> VM exists'
+$ssh_cmd 'echo "==> Ports available:"; sudo ss -lnp4 | grep qemu-system'
+$ssh_cmd 'while ps aux | grep -q qemu-system; do echo "==> VM still running.. waiting"; sleep 120; done'
+$ssh_cmd 'echo ==> VM is now off!'
+$ssh_cmd 'echo ====== COMPLETE ======'
+$ssh_cmd 'echo QCOW image should now be ready!'
 
