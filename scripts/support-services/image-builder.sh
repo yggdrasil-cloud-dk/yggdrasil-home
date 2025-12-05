@@ -39,7 +39,7 @@ openstack volume show $volume_name || openstack volume create $volume_name --siz
 
 # User-data
 
-cat > /tmp/user_data.sh <<EOF
+cat > /tmp/user_data.sh <<'EOF'
 #!/bin/bash
 
 set -x
@@ -65,14 +65,19 @@ mkdir -p /var/lib/libvirt/packer
 cd /var/lib/libvirt/packer
 
 # create patch file
-echo 'diff --git a/win2022-gui.json b/win2022-gui.json
-index 5041d00..1a70399 100644
+cat > /tmp/packer.diff<<'EOT'
+diff --git a/win2022-gui.json b/win2022-gui.json
+index 5041d00..9aef81c 100644
 --- a/win2022-gui.json
 +++ b/win2022-gui.json
-@@ -86,2 +86,3 @@
-             "winrm_timeout": "4h",
-+            "vnc_bind_address": "0.0.0.0",
-             "qemuargs": [ [ "-cdrom", "{{user `virtio_iso_path`}}" ] ],' > /tmp/packer.diff
+@@ -86,0 +87 @@
++           "vnc_bind_address": "0.0.0.0",
+@@ -125,0 +127,4 @@
++        {
++            "type": "powershell",
++            "scripts": ["scripts/custom.ps1"]
++        },
+EOT
 
 # windows
 git clone https://github.com/eaksel/packer-Win2022.git
@@ -82,6 +87,29 @@ git clone https://github.com/rlaun/packer-ubuntu-22.04/
 # TODO: Get this working
 
 cd packer-Win2022
+
+
+cat > scripts/custom.ps1<<'EOT'
+# Qemu agent
+$url = "https://salt-fileserver.servercontrol.com.au/files/virtio/qemu-ga-x86_64.msi"
+$dest = "$env:USERPROFILE\Downloads\qemu-ga-x86_64.msi"
+Invoke-WebRequest -Uri $url -OutFile $dest 
+Start-Process msiexec.exe -Wait -ArgumentList "/i $dest /qn /l*v log.txt /norestart"
+
+
+# Cloudbase init
+$url = "https://cloudbase.it/downloads/CloudbaseInitSetup_Stable_x64.msi"
+$dest = "$env:USERPROFILE\Downloads\CloudbaseInitSetup_Stable_x64.msi"
+Invoke-WebRequest -Uri $url -OutFile $dest
+Start-Process msiexec.exe -Wait -ArgumentList "/i $dest /qn /l*v log.txt /norestart"
+
+
+# Enable RDP
+Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\' -Name "fDenyTSConnections" -Value 0
+
+# Allow RDP through firewall
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+EOT
 
 # apply patch
 git apply /tmp/packer.diff
