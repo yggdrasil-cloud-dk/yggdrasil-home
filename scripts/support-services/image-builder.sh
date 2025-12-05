@@ -67,16 +67,28 @@ cd /var/lib/libvirt/packer
 # create patch file
 cat > /tmp/packer.diff<<'EOT'
 diff --git a/win2022-gui.json b/win2022-gui.json
-index 5041d00..9aef81c 100644
+index 5041d00..3111a27 100644
 --- a/win2022-gui.json
 +++ b/win2022-gui.json
-@@ -86,0 +87 @@
-+           "vnc_bind_address": "0.0.0.0",
-@@ -125,0 +127,4 @@
+@@ -84,6 +84,7 @@
+             "winrm_use_ssl": true,
+             "winrm_insecure": true,
+             "winrm_timeout": "4h",
++            "vnc_bind_address": "0.0.0.0",
+             "qemuargs": [ [ "-cdrom", "{{user `virtio_iso_path`}}" ] ],
+             "floppy_files": ["scripts/bios/gui/autounattend.xml"],
+             "shutdown_command": "shutdown /s /t 5 /f /d p:4:1 /c \"Packer Shutdown\"",
+@@ -123,6 +124,10 @@
+             "type": "powershell",
+             "scripts": ["scripts/win-update.ps1"]
+         },
 +        {
 +            "type": "powershell",
 +            "scripts": ["scripts/custom.ps1"]
 +        },
+         {
+             "type": "windows-restart",
+             "restart_timeout": "30m"
 EOT
 
 # windows
@@ -115,7 +127,7 @@ EOT
 git apply /tmp/packer.diff
 
 # download virtio iso
-wget https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.229-1/virtio-win-0.1.229.iso
+wget -q https://fedorapeople.org/groups/virt/virtio-win/direct-downloads/archive-virtio/virtio-win-0.1.229-1/virtio-win-0.1.229.iso
 
 # plugin config
 cat > template.pkr.hcl <<EOT
@@ -128,6 +140,8 @@ packer {
   }
 }
 EOT
+
+export HOME=/root
 
 packer init .
 
