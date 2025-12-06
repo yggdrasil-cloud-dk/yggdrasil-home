@@ -182,10 +182,10 @@ sleep 300
 ssh_cmd="sshpass -p ubuntu ssh -o StrictHostKeyChecking=no ubuntu@$fip"
 $ssh_cmd 'while ! ls -d /var/lib/libvirt/packer/packer-Win2022; do echo "==> Packer repo not cloned yet.. waiting"; sleep 120; done'
 $ssh_cmd 'echo ==> Packer repo exists'
-$ssh_cmd 'while ! ps aux | grep -q qemu-system; do echo "==> VM not started yet.. waiting"; sleep 120; done'
+$ssh_cmd 'while ! sudo pstree | grep -q qemu-system; do echo "==> VM not started yet.. waiting"; sleep 120; done'
 $ssh_cmd 'echo ==> VM exists'
 $ssh_cmd 'echo "==> Ports available:"; sudo ss -lnp4 | grep qemu-system'
-$ssh_cmd 'while ps aux | grep -q qemu-system; do echo "==> VM still running.. waiting"; sleep 120; done'
+$ssh_cmd 'while sudo pstree | grep -q qemu-system; do echo "==> VM still running.. waiting"; sleep 300; done'
 $ssh_cmd 'echo ==> VM is now off!'
 $ssh_cmd 'echo ====== COMPLETE ======'
 $ssh_cmd 'echo QCOW image should now be ready!'
