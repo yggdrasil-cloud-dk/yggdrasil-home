@@ -75,28 +75,6 @@ git clone https://github.com/rlaun/packer-ubuntu-22.04/
 
 cd packer-Win2022
 
-cat > scripts/custom.ps1<<'EOT'
-# Qemu agent
-$url = "https://salt-fileserver.servercontrol.com.au/files/virtio/qemu-ga-x86_64.msi"
-$dest = "$env:USERPROFILE\Downloads\qemu-ga-x86_64.msi"
-Invoke-WebRequest -Uri $url -OutFile $dest 
-Start-Process msiexec.exe -Wait -ArgumentList "/i $dest /qn /l*v log.txt /norestart"
-
-
-# Cloudbase init
-$url = "https://cloudbase.it/downloads/CloudbaseInitSetup_Stable_x64.msi"
-$dest = "$env:USERPROFILE\Downloads\CloudbaseInitSetup_Stable_x64.msi"
-Invoke-WebRequest -Uri $url -OutFile $dest
-Start-Process msiexec.exe -Wait -ArgumentList "/i $dest /qn /l*v log.txt /norestart"
-
-
-# Enable RDP
-Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\' -Name "fDenyTSConnections" -Value 0
-
-# Allow RDP through firewall
-Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
-EOT
-
 cat > win2022-gui.json <<'EOT'
 {
     "variables": {
@@ -162,12 +140,12 @@ cat > win2022-gui.json <<'EOT'
             "scripts": ["scripts/win-update.ps1"]
         },
         {
-            "type": "powershell",
-            "scripts": ["scripts/custom.ps1"]
-        },
-        {
             "type": "windows-restart",
             "restart_timeout": "180m"
+        },
+        {
+            "type": "powershell",
+            "scripts": ["scripts/custom.ps1"]
         },
         {
             "type": "powershell",
@@ -180,6 +158,28 @@ cat > win2022-gui.json <<'EOT'
         }
     ]
 }
+EOT
+
+cat > scripts/custom.ps1<<'EOT'
+# Qemu agent
+$url = "https://salt-fileserver.servercontrol.com.au/files/virtio/qemu-ga-x86_64.msi"
+$dest = "$env:USERPROFILE\Downloads\qemu-ga-x86_64.msi"
+Invoke-WebRequest -Uri $url -OutFile $dest 
+Start-Process msiexec.exe -Wait -ArgumentList "/i $dest /qn /l*v log.txt /norestart"
+
+
+# Cloudbase init
+$url = "https://cloudbase.it/downloads/CloudbaseInitSetup_Stable_x64.msi"
+$dest = "$env:USERPROFILE\Downloads\CloudbaseInitSetup_Stable_x64.msi"
+Invoke-WebRequest -Uri $url -OutFile $dest
+Start-Process msiexec.exe -Wait -ArgumentList "/i $dest /qn /l*v log.txt /norestart RUNSYSPREP=0"
+
+
+# Enable RDP
+Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\' -Name "fDenyTSConnections" -Value 0
+
+# Allow RDP through firewall
+Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
 EOT
 
 cat > ./scripts/cleanup.ps1 <<'EOT'
@@ -257,13 +257,13 @@ ssh-keygen -f "/root/.ssh/known_hosts" -R $fip
 
 ssh_cmd="sshpass -p ubuntu ssh -o StrictHostKeyChecking=no ubuntu@$fip"
 while ! $ssh_cmd 'echo hi'; do sleep 10; echo "waiting for ssh.."; done
-$ssh_cmd 'while ! ls -d /var/lib/libvirt/packer/packer-Win2022; do echo "==> Packer repo not cloned yet.. waiting"; sleep 120; done'
-$ssh_cmd 'echo "==> Packer repo exists"'
-$ssh_cmd 'while ! sudo pstree | grep -q qemu-system; do echo "==> VM not started yet.. waiting"; sleep 120; done'
-$ssh_cmd 'echo "==> VM exists"'
+while ! $ssh_cmd 'ls -d /var/lib/libvirt/packer/packer-Win2022'; do echo "==> Packer repo not cloned yet.. waiting"; sleep 120; done
+echo "==> Packer repo exists"
+while ! $ssh_cmd 'sudo pstree | grep -q qemu-system'; do echo "==> VM not started yet.. waiting"; sleep 120; done
+echo "==> VM exists"
 $ssh_cmd 'echo "==> Ports available:"; sudo ss -lnp4 | grep qemu-system'
-$ssh_cmd 'while sudo pstree | grep -q qemu-system; do echo "==> VM still running.. waiting"; sleep 300; done'
-$ssh_cmd 'echo "==> VM is now off!"'
-$ssh_cmd 'echo "====== COMPLETE ======"'
-$ssh_cmd 'echo "QCOW image should now be ready!"'
+while $ssh_cmd 'sudo pstree | grep -q qemu-system'; do echo "==> VM still running.. waiting"; sleep 300; done
+echo "==> VM is now off!"
+echo "====== COMPLETE ======"
+echo "QCOW image should now be ready!"
 
