@@ -103,6 +103,7 @@ openstack-remove-test-resources:
 ###########
 
 init: prepare-ansible
+
 infra-up: harden vpn devices-configure checks cephadm-deploy 
 
 kollaansible-up: kollaansible-images kollaansible-prepare kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
