@@ -15,9 +15,10 @@
       command: ping -c 1 -W 2 {{ hostvars[item[0]][item[1]] | ansible.netcommon.ipaddr('address') }}
       loop: "{{ groups['deployment_nodes'] | product(['network_openstack_mgmt_ip', 'network_ceph_public_ip', 'network_ceph_cluster_ip']) | list }}"
 
-    - name: Check nodes could all ping the gateway of provider network
-      command: ping -c 1 -W 2 {{ hostvars[item].network_provider_gateway_ip | ansible.netcommon.ipaddr('address') }}
-      loop: "{{ groups['deployment_nodes'] }}"
+    # Not a good test. Usually there are no ips on provider network nodes
+    # - name: Check nodes could all ping the gateway of provider network
+    #   command: ping -c 1 -W 2 {{ hostvars[item].network_provider_gateway_ip | ansible.netcommon.ipaddr('address') }}
+    #   loop: "{{ groups['deployment_nodes'] }}"
 
 
 - name: Check networking on deployment controller

@@ -11,7 +11,7 @@ function set_global_config () {
 
 	# handles when comments only in beginning of line
 	if grep -q "#\? *$config_key:" $CONFIG_DIR/globals.yml; then
-		sed -i "s/#\?\( *$config_key:\).*/\1 $config_value/g" $CONFIG_DIR/globals.yml
+		sed -i "s/#\? *\($config_key:\).*/\1 $config_value/g" $CONFIG_DIR/globals.yml
 	else
 		sed -i "$ a $config_key: $config_value" $CONFIG_DIR/globals.yml
 	fi
@@ -98,11 +98,9 @@ set_global_config enable_venus yes
 set_global_config enable_watcher yes
 #set_global_config enable_zun yes  # not supported in 2023.2
 
-
 set_global_config docker_custom_config '{ "live-restore": true }'
 #set_global_config docker_custom_config '{ "live-restore": true, "insecure-registries" : ["192.168.150.1:5000"] }'
 #set_global_config skyline_console_image_full 192.168.150.1:5000/kolla/skyline-console:20.1.0
-
 
 #set_global_config magnum_tag zed-ubuntu-jammy
 
@@ -118,6 +116,8 @@ set_global_config nova_console novnc
 
 set_global_config openstack_service_workers "$OPENSTACK_WORKER_COUNT"
 set_global_config openstack_service_rpc_workers "$OPENSTACK_WORKER_COUNT"
+
+set_global_config disable_firewall no
 
 for service in glance nova cinder/cinder-volume cinder/cinder-backup; do
 	mkdir -p etc/kolla/config/$service/

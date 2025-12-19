@@ -102,21 +102,12 @@ openstack-remove-test-resources:
 # Bundles #
 ###########
 
-infra-up: prepare-ansible harden devices-configure checks cephadm-deploy 
+init: prepare-ansible
+infra-up: harden vpn devices-configure checks cephadm-deploy 
 
 kollaansible-up: kollaansible-images kollaansible-prepare kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
 
-#== TRYING TO PARALLELIZE ABOVE ==#
-infra-up-v2: prepare-ansible harden devices-configure checks kollaansible-prepare
-
-infra-kolla-ansible-parallel:
-	 $(MAKE) -j 5 cephadm-deploy kollaansible-images kollaansible-create-certs kollaansible-bootstrap
-
-kolla-ansible-serial:	kollaansible-prechecks kollaansible-deploy kollaansible-lma
-#==============
-
 all-up: infra-up kollaansible-up
-all-up-v2: infra-up-v2 infra-kolla-ansible-parallel kolla-ansible-serial
 
 dev-up: vagrant-up all-up all-postdeploy
 

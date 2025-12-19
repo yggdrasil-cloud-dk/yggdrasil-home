@@ -169,7 +169,6 @@
         gw: "{{ item.gateway }}"
         if: "{{ item.interface }}"
         vlan: "{{ item.vlan }}"
-        tmp_ip: "{{ temp_ip | default('') }}"  # This is hacky and perhaps useless?
       loop: "{{ network_extra_route_tables | default([]) }}"
 
     - name: Create cni directory for Zun

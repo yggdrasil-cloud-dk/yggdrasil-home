@@ -14,6 +14,15 @@
         pkg: 
           - cephadm
           - ceph-common
+      when: inventory_hostname in groups['deployment_nodes']
+
+    # splitting because fails when deployment_controller also as deployment_node (apt-get lock)
+    - name: Install cephadm and ceph-common
+      apt:
+        pkg: 
+          - cephadm
+          - ceph-common
+      when: inventory_hostname in groups['deployment_controller']
 
     - name: Create ceph directory
       file:

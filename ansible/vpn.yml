@@ -1,8 +1,15 @@
 ---
 - name: Set up vpn networks
-  hosts: deployment_controller
+  hosts: deployment_nodes
+  gather_facts: yes
   any_errors_fatal: true
   tasks:
+    # - name: Gather facts from deployment nodes
+    #   ansible.builtin.setup:
+    #   delegate_to: "{{ item }}"
+    #   delegate_facts: true
+    #   loop: "{{ groups['deployment_nodes'] }}"
+
     - name: Download docker install script
       command: curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
       args:
@@ -51,15 +58,20 @@
       changed_when: false
       register: docker_ps_peervpn
 
-    - name: Generate random password string
+    - name: Generate random password string on first node
       set_fact:
         vpn_key: "{{ lookup('password', '/dev/null chars=ascii_letters,digit length=24') }}"
       when: docker_ps_peervpn.rc != 0
       no_log: true
+      when: inventory_hostname == groups['deployment_nodes'][0]
+
+    - name: initialize vpn peers list
+      set_fact:
+        vpn_peers: []
 
     - name: Build list of vpn peers
       set_fact:
-        vpn_peers: "{{ vpn_peers | default([]) + [ hostvars[item].ansible_default_ipv4.address ] }}"
+        vpn_peers: "{{ vpn_peers + [ (hostvars[item].ansible_default_ipv4.address | string) ] }}"
       loop: "{{ groups['deployment_nodes'] }}"
       loop_control:
         index_var: index
@@ -70,14 +82,14 @@
 
     - name: deploy peervpn container
       command: |
-        docker run -d --device=/dev/net/tun --cap-add=NET_ADMIN --net=host \
+        docker run -d --device=/dev/net/tun --cap-add=NET_ADMIN --cpu-shares=4096 --net=host \
           -e VPN_IP={{ vpn_ip | ansible.netcommon.ipaddr('address') }} \
           -e VPN_CIDR={{ vpn_ip | ansible.netcommon.ipaddr('prefix') }} \
           -e VPN_PORT={{ vpn_port }} \
           -e VPN_INTERFACE=vpn0
-          -e VPN_KEY={{ vpn_key }} \
+          -e VPN_KEY={{ hostvars[groups['deployment_nodes'][0]].vpn_key }} \
           {% if vpn_peers is defined and vpn_peers | length > 0 %}
-          -e VPN_PEERS="{% for peer in vpn_peers %}{{ peer + ':' + vpn_port }} {% endfor %}" \
+          -e VPN_PEERS="{% for peer in vpn_peers %}{{ peer + ':' + (vpn_port | string) }} {% endfor %}" \
           {% endif %}
           --name peervpn
           --restart always
