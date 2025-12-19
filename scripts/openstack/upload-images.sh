@@ -23,6 +23,8 @@ image_urls=(
 	https://tarballs.opendev.org/openstack/trove/images/trove-master-guest-ubuntu-jammy.qcow2
 )
 
+apt install -y qemu-utils
+
 # After pipe_cmd, image should be of $image_format type
 for image_url in ${image_urls[@]}; do
 	pipe_cmd=cat
