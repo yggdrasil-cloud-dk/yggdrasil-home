@@ -157,6 +157,11 @@
         creates: /root/cephadm_pools.done
       run_once: true
 
+      # need default 8443 on node for nova console proxy.
+    - name: Change mgr dashboard port
+      shell: |
+        ceph config set mgr mgr/dashboard/ssl_server_port 8444 && docker ps --format '{{ .Names }}' | grep ceph | grep mgr- | xargs docker restart
+
 - name: Destroy cephadm cluster
   hosts: deployment_nodes[0]
   any_errors_fatal: true
