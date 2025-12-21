@@ -21,7 +21,7 @@
         image=octavia-amphora-haproxy-{{ openstack_release }}
 
         rm -f $image.qcow2.CHECKSUM*
-
+        
         openstack image list -f value | grep -i amphora || (
           wget https://swift.services.a.regiocloud.tech/swift/v1/AUTH_b182637428444b9aa302bb8d5a5a418c/openstack-octavia-amphora-image/$image.qcow2
           apt install -y qemu-utils
@@ -39,17 +39,23 @@
           rm -f $image.qcow2 $image.raw
         )
 
-        lb_mgmt_router_external_gatway_ip={{ openstack_octavia_mgmt_router_external_gateway_ip }}
+        lb_mgmt_router_external_gatway_ip={{ openstack_amphora_network.router_external_ip }}
 
-        openstack subnet show lb-mgmt-subnet || openstack subnet create lb-mgmt-subnet --network lb-mgmt-net --subnet-range {{ openstack_amphora_subnet_cidr }}
+        # create octavia management subnet
+        openstack subnet show lb-mgmt-subnet || openstack subnet create lb-mgmt-subnet \
+                                                --network lb-mgmt-net \
+                                                --subnet-range {{ openstack_amphora_network.cidr }} \
+                                                --allocation-pool start={{ openstack_amphora_network.allocation_start }},end={{ openstack_amphora_network.allocation_end }}
 
-        # set gateway on octavia management network
-        openstack subnet set --gateway {{ openstack_amphora_router_gateway_ip }} lb-mgmt-subnet
+        # set gateway on octavia management subnet
+        openstack subnet set --gateway {{ openstack_amphora_network.gateway_ip }} lb-mgmt-subnet
+
+        # create another (internal) provider subnet to connect to octavia subnet
+        openstack subnet show lb-mgmt-provider-subnet || openstack subnet create --no-dhcp --allocation-pool start={{ openstack_octavia_provider_network.allocation_start }},end={{ openstack_octavia_provider_network.allocation_end }} --network public1 --subnet-range {{ openstack_octavia_provider_network.cidr }} lb-mgmt-provider-subnet
 
         # create router and to make it reachable from octavia worker
         openstack router show lb-mgmt-router || (openstack router create lb-mgmt-router && openstack router add subnet lb-mgmt-router lb-mgmt-subnet)
-        openstack router set --disable-snat --external-gateway public1 --fixed-ip subnet=public1-subnet,ip-address=$lb_mgmt_router_external_gatway_ip lb-mgmt-router
-
+        openstack router set --disable-snat --external-gateway public1 --fixed-ip subnet=lb-mgmt-provider-subnet,ip-address=$lb_mgmt_router_external_gatway_ip lb-mgmt-router
       args:
         chdir: "{{ playbook_dir }}/../.."
         executable: /bin/bash
@@ -70,7 +76,7 @@
 
         [Service]
         Type=oneshot
-        ExecStart=/bin/bash -c 'ip r | grep -q ^{{ openstack_amphora_subnet_cidr }} || ip r add {{ openstack_amphora_subnet_cidr }} via {{ openstack_octavia_mgmt_router_external_gateway_ip }}'
+        ExecStart=/bin/bash -c 'ip r | grep -q ^{{ openstack_amphora_network.cidr }} || ip r add {{ openstack_amphora_network.cidr }} via {{ openstack_amphora_network.router_external_ip }}'
 
         [Install]
         WantedBy=default.target

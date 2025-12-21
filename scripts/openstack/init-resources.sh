@@ -21,7 +21,7 @@ export KOLLA_CONFIG_PATH=$CONFIG_DIR
 export ENABLE_EXT_NET=0
 
 openstack network show public1  || \
-	(openstack network create --share --external --provider-physical-network physnet1 --provider-network-type flat public1 && \
+	(openstack network create --share --external --provider-physical-network physnet1 --provider-network-type flat --mtu ${EXT_NET_MTU} public1 && \
 	openstack subnet create --no-dhcp --allocation-pool ${EXT_NET_RANGE} --network public1 --subnet-range ${EXT_NET_CIDR} --gateway ${EXT_NET_GATEWAY} public1-subnet )
 
 ./kolla-ansible/tools/init-runonce

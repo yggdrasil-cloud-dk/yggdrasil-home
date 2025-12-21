@@ -38,7 +38,7 @@
     - name: Download docker install script
       command: curl -fsSL https://get.docker.com -o /root/get-docker.sh
       args:
-        creates: /root/get-docker.sh
+        creates: /usr/bin/docker
 
     - name: Install docker
       command: sh /root/get-docker.sh
@@ -47,9 +47,15 @@
 
     - name: Overwrite docker source
       copy:
-        dest: /etc/apt/sources.list.d/docker.list
+        dest: /etc/apt/sources.list.d/docker.sources
         content: |
-          deb https://download.docker.com/linux/ubuntu focal stable
+          # Ansible managed
+
+          Types: deb
+          URIs: https://download.docker.com/linux/ubuntu
+          Suites: jammy
+          Components: stable
+          Signed-by: /etc/apt/keyrings/docker.asc
 
     - name: Ensure docker apt key is imported
       ansible.builtin.apt_key:
@@ -88,6 +94,7 @@
           {{ hostvars[host].network_openstack_mgmt_ip | ansible.netcommon.ipaddr('address') }} {{ host }}
           {% endfor %}
       delegate_to: "{{ groups['deployment_controller'][0] }}"
+      when: groups['deployment_controller'][0] not in groups['deployment_nodes']
       run_once: true
 
       # Needed to be added before cephadm deployment
