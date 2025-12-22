@@ -64,7 +64,7 @@ systemd_loop_after=
 $add_to_systemd_loop_unit_file && systemd_loop_after=mnt.mount
 
 # make devices persistent
-cat > /etc/systemd/system/loop-device.service << EOF
+cat > /etc/systemd/system/storage_loop_device.service << EOF
 [Unit]
 After=$systemd_loop_after
 
@@ -77,8 +77,8 @@ WantedBy=default.target
 EOF
 
 systemctl daemon-reload
-systemctl restart loop-device
-systemctl enable loop-device
+systemctl restart storage_loop_device.service
+systemctl enable storage_loop_device.service
 
 
 exit 0

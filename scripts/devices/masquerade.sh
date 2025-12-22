@@ -4,7 +4,7 @@ set -xe
 
 sudo apt install -y net-tools
 
-cat > /etc/systemd/system/masquerade.service <<EOF
+cat > /etc/systemd/system/network_masquerade.service <<EOF
 [Unit]
 Description=Masquerade vlans when exiting primary interface
 After=network.target
@@ -20,5 +20,5 @@ RequiredBy=network.target
 EOF
 
 systemctl daemon-reload
-systemctl restart masquerade.service
-systemctl enable masquerade.service
+systemctl restart network_masquerade.service
+systemctl enable network_masquerade.service

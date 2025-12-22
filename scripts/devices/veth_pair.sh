@@ -17,7 +17,7 @@ ip link set dev veth1 master br0
 EOF
 EOT
 
-cat > /etc/systemd/system/veth_device.service <<EOF
+cat > /etc/systemd/system/network_veth_device.service <<EOF
 [Unit]
 Description=create veth device for openstack external gateway
 After=network.target
@@ -32,5 +32,5 @@ RequiredBy=network.target
 EOF
 
 systemctl daemon-reload
-systemctl restart veth_device.service
-systemctl enable veth_device.service
+systemctl restart network_veth_device.service
+systemctl enable network_veth_device.service

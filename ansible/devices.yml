@@ -81,6 +81,9 @@
         daemon_reload: yes
       when: reconfigure_docker.changed
 
+    - name: Ensure docker doesn't set policy to DROP (one time)
+      command: iptables --policy FORWARD ACCEPT
+
     - name: Configure hostname
       hostname:
         name: "{{ inventory_hostname }}"

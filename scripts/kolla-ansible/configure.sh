@@ -183,11 +183,22 @@ controls {
 EOF
 
 # neutron
-mkdir -p etc/kolla/config/neutron/
-cat > etc/kolla/config/neutron/dhcp_agent.ini <<EOF
+config_dir=etc/kolla/config/neutron
+mkdir -p $config_dir
+cat > $config_dir/dhcp_agent.ini <<EOF
 [DEFAULT]
 dnsmasq_dns_servers = {{ 'api' | kolla_address }}
 EOF
+# TODO: NOT SURE OF THESE VALUES
+cat >  etc/kolla/config/neutron.conf <<EOF
+[DEFAULT]
+global_physnet_mtu = 1400
+dns_servers = 1.1.1.1,8.8.8.8
+EOF
+cat > $config_dir/ml2_conf.ini <<EOF
+path_mtu = 1400
+EOF
+
 
 # glance
 config_dir=etc/kolla/config/glance

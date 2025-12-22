@@ -23,7 +23,7 @@ image_urls=(
 	https://tarballs.opendev.org/openstack/trove/images/trove-master-guest-ubuntu-jammy.qcow2
 )
 
-apt install -y qemu-utils
+apt install -y qemu-utils cloud-guest-utils
 
 # After pipe_cmd, image should be of $image_format type
 for image_url in ${image_urls[@]}; do
@@ -46,33 +46,40 @@ for image_url in ${image_urls[@]}; do
 			echo ========== $image_name ===========
 			(curl $image_url --output - || exit 1) | $pipe_cmd | cat - > $image_name.$image_format
 			qemu-img convert $image_name.$image_format $image_name.raw
-			if [[ "$image_url" == *jammy* ]]; then
-				mkdir -p /mnt/openstack-image-mods
-				losetup -fP $image_name.raw
-				loop_dev=$(losetup | grep $image_name.raw | awk '{print $1}' | cut -d '/' -f 3)
-				loop_part=$(lsblk -l | grep ${loop_dev}p | grep G | awk '{print $1}')
-                	        (
-					set -xe 
-					mount /dev/$loop_part /mnt/openstack-image-mods
-					chroot /mnt/openstack-image-mods bash -s <<-EOF
-					set -x
-					mkdir -p /run/systemd/resolve/
-					echo nameserver 8.8.8.8 > /run/systemd/resolve/stub-resolv.conf
-					# CHANGES START
-					apt update
-					DEBIAN_FRONTEND=noninteractive apt install -y \
-						-o Dpkg::Options::="--force-confold" --force-yes \
-						qemu-guest-agent python3-pip
-					sed -i 's/disable_root: true/disable_root: false\nssh_pwauth: true\nchpasswd:\n  expire: false/'  /etc/cloud/cloud.cfg
-					# CHANGES END
-					rm -rf /run/systemd/resolve/
-					EOF
-					openstack image create --progress $image_name --file $image_name.raw
-					rm -f $image_name*
-				)
-				umount /mnt/openstack-image-mods
-				losetup -d /dev/$loop_dev
-				rm -rf /mnt/openstack-image-mods
+			if [[ "$image_url" == *jammyNOTWORKINGFIXME* ]]; then
+				echo hi
+#				mkdir -p /mnt/openstack-image-mods
+#				dd if=/dev/zero bs=10M count=10 >> $image_name.raw
+#				losetup -fP $image_name.raw
+#				loop_dev=$(losetup | grep $image_name.raw | awk '{print $1}' | cut -d '/' -f 3)
+#				loop_part=$(lsblk -l | grep ${loop_dev}p | grep G | awk '{print $1}')
+#				set +e
+#                	        (
+#					set -xe
+#					growpart /dev/$loop_dev $(echo $loop_part | sed "s/${loop_dev}p//")
+#					e2fsck -f /dev/$loop_part
+#					resize2fs /dev/$loop_part
+#					mount /dev/$loop_part /mnt/openstack-image-mods
+#					chroot /mnt/openstack-image-mods bash -s <<-EOF
+#					set -x
+#					mkdir -p /run/systemd/resolve/
+#					echo nameserver 8.8.8.8 > /run/systemd/resolve/stub-resolv.conf
+#					# CHANGES START
+#					apt update
+#					DEBIAN_FRONTEND=noninteractive apt install -y \
+#						-o Dpkg::Options::="--force-confold" --force-yes \
+#						qemu-guest-agent python3-pip
+#					sed -i 's/disable_root: true/disable_root: false\nssh_pwauth: true\nchpasswd:\n  expire: false/'  /etc/cloud/cloud.cfg
+#					# CHANGES END
+#					rm -rf /run/systemd/resolve/
+#					EOF
+#					openstack image create --progress $image_name --file $image_name.raw
+#					rm -f $image_name*
+#				)
+#				umount /mnt/openstack-image-mods
+#				losetup -d /dev/$loop_dev
+#				rm -rf /mnt/openstack-image-mods
+#				set -e
 			else
 				openstack image create --progress $image_name --file $image_name.raw
 				rm -f $image_name*
