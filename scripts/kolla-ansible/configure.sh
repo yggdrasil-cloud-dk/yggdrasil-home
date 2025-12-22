@@ -187,7 +187,8 @@ config_dir=etc/kolla/config/neutron
 mkdir -p $config_dir
 cat > $config_dir/dhcp_agent.ini <<EOF
 [DEFAULT]
-dnsmasq_dns_servers = {{ 'api' | kolla_address }}
+#dnsmasq_dns_servers = {{ 'api' | kolla_address }}
+dnsmasq_local_resolv = True
 EOF
 # TODO: NOT SURE OF THESE VALUES
 cat >  etc/kolla/config/neutron.conf <<EOF

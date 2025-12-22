@@ -56,32 +56,6 @@
       args:
         chdir: "{{ playbook_dir }}/../.."
         executable: /bin/bash
-
-- name: Setup octavia routes
-  hosts: deployment_nodes
-  any_errors_fatal: true
-  tasks:
-    - name: Setup Octavia
-      shell: |
-        service=octavia-mgmt-route.service
-        unit_file=/etc/systemd/system/$service
-
-        cat > $unit_file <<EOF
-        [Unit]
-        Description=Add static route for octavia mgmt network
-        After=network.target
-
-        [Service]
-        Type=oneshot
-        ExecStart=/bin/bash -c 'ip r | grep -q ^{{ openstack_amphora_network.cidr }} || ip r add {{ openstack_amphora_network.cidr }} via {{ openstack_amphora_network.router_external_ip }}'
-
-        [Install]
-        WantedBy=default.target
-        EOF
-
-        systemctl daemon-reload
-        systemctl enable $service
-        systemctl start $service
         
 - name: Test octavia
   hosts: deployment_controller
