@@ -157,14 +157,32 @@
       script: "{{ playbook_dir }}/../scripts/devices/masquerade.sh"
       when: network_masquerade_vlans
 
-    # # we might not need this for openstack at all, but just in case
-    # - name: Configure additional route tables
-    #   script: "{{ playbook_dir }}/../scripts/devices/create-route-table.sh"    
-    #   environment:
-    #     table: "{{ item.table }}"
-    #     network_cidr: "{{ item.network_cidr }}"
-    #     routes: "{% for route in item.routes %}{{ route }}{% if not loop.last %};{% endif %}{% endfor %}"
-    #   loop: "{{ network_extra_route_tables | default([]) }}"
+    - name: Configure additional routes in main routing table
+      shell: |
+        cat > /etc/systemd/system/network_create_routes.service <<EOF
+        [Unit]
+        Description=Network routes for table main
+        After=network.target
+
+        [Service]
+        {% for route in network_extra_routes_main_table.routes %}
+        ExecStart=/bin/bash -c "ip route show table main | grep -q \"{{ route }}\" || ip route add {{ route }} table main"
+        {% endfor %}
+        Type=oneshot
+
+        [Install]
+        WantedBy=default.target
+        RequiredBy=network.target
+        EOF
+
+        systemctl daemon-reload
+        systemctl restart network_create_routes.service
+        systemctl enable network_create_routes.service
+      when:
+        - network_extra_routes_main_table is defined
+        - network_extra_routes_main_table.routes is defined
+        - network_extra_routes_main_table.routes | length > 0
+        
 
     - name: Configure additional route tables
       environment:
