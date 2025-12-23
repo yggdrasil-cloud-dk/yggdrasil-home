@@ -10,6 +10,34 @@
     #   delegate_facts: true
     #   loop: "{{ groups['deployment_nodes'] }}"
 
+    - name: Create docker directory
+      command: mkdir -p /etc/docker
+      args:
+        creates: /etc/docker
+
+    - name: Check if docker daemon.json exists
+      stat:
+        path: /etc/docker/daemon.json
+      register: docker_daemon_json
+
+    - name: Add options to docker daemon.json
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+              "bridge": "none",
+              "ip-forward": false,
+              "ip-forward-no-drop": true,
+              "iptables": false,
+              "live-restore": true,
+              "log-opts": {
+                  "max-file": "5",
+                  "max-size": "50m"
+              }
+          }
+      when: not docker_daemon_json.stat.exists
+      register: docker_daemon_json_configured
+
     - name: Download docker install script
       command: curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
       args:
@@ -19,39 +47,14 @@
       command: sh /tmp/get-docker.sh
       args:
         creates: /usr/bin/docker
+      register: docker_installed
 
     - name: Ensure docker service is started and enabled
-      systemd:
-        name: docker
-        state: started
-        enabled: yes
-
-    - name: Check if docker daemon.json exists
-      stat:
-        path: /etc/docker/daemon.json
-      register: docker_daemon_json
-
-    - name: Add live-restore to docker daemon.json
-      copy:
-        dest: /etc/docker/daemon.json
-        content: |
-          {
-            "ip-forward-no-drop": true,
-            "live-restore": true
-          }
-      when: not docker_daemon_json.stat.exists
-
-    - name: Restart docker to apply daemon.json changes
       systemd:
         name: docker
         state: restarted
-      when: not docker_daemon_json.stat.exists
-
-    - name: Ensure docker service is started and enabled
-      systemd:
-        name: docker
-        state: started
         enabled: yes
+      when: docker_installed or docker_daemon_json_configured.changed
 
     - name: Check if vpn container exists
       shell: docker ps -a | grep -q peervpn

@@ -99,8 +99,6 @@ set_global_config enable_watcher yes
 #set_global_config enable_zun yes  # not supported in 2023.2
 
 set_global_config docker_custom_config '{ "live-restore": true, "ip-forward-no-drop": true }'
-#set_global_config docker_custom_config '{ "live-restore": true, "insecure-registries" : ["192.168.150.1:5000"] }'
-#set_global_config skyline_console_image_full 192.168.150.1:5000/kolla/skyline-console:20.1.0
 
 #set_global_config magnum_tag zed-ubuntu-jammy
 
