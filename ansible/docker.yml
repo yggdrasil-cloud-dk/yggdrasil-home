@@ -1,0 +1,91 @@
+- name: Set up devices
+  hosts: deployment_nodes
+  any_errors_fatal: true
+  tasks:
+    - name: Ensure docker.io is not installed
+      apt:
+        name: docker.io
+        state: absent
+        purge: yes
+
+    - name: Create docker directory
+      command: mkdir -p /etc/docker
+      args:
+        creates: /etc/docker
+
+    - name: Check if docker daemon.json exists
+      stat:
+        path: /etc/docker/daemon.json
+      register: docker_daemon_json
+
+    - name: Add options to docker daemon.json
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+              "bridge": "none",
+              "ip-forward": false,
+              "ip-forward-no-drop": true,
+              "iptables": false,
+              "live-restore": true,
+              "log-opts": {
+                  "max-file": "5",
+                  "max-size": "50m"
+              }
+          }
+      when: not docker_daemon_json.stat.exists
+      register: docker_daemon_json_configured
+
+    - name: Overwrite docker source
+      copy:
+        dest: /etc/apt/sources.list.d/docker.sources
+        content: |
+          # Ansible managed
+
+          Types: deb
+          URIs: https://download.docker.com/linux/ubuntu
+          Suites: jammy
+          Components: stable
+          Signed-by: /etc/apt/keyrings/docker.asc
+
+    - name: Ensure docker apt key is imported
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+
+    - name: Download docker install script
+      command: curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+      args:
+        creates: /tmp/get-docker.sh
+
+    - name: Install docker
+      command: sh /tmp/get-docker.sh
+      args:
+        creates: /usr/bin/docker
+      register: docker_installed
+
+    - name: Ensure docker service is started and enabled
+      systemd:
+        name: docker
+        state: restarted
+        enabled: yes
+      when: docker_installed.changed or docker_daemon_json_configured.changed
+
+    - name: Enable docker api over tcp
+      shell: |
+        mkdir -p /etc/systemd/system/docker.service.d
+        cat > /etc/systemd/system/docker.service.d/override.conf <<EOF
+        [Service]
+        ExecStart=
+        ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock
+        EOF
+      args:
+        creates: /etc/systemd/system/docker.service.d/override.conf
+      register: reconfigure_docker
+
+    - name: Enable docker service
+      systemd:
+        name: docker.service
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+      when: reconfigure_docker.changed

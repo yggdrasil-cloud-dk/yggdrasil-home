@@ -1,0 +1,55 @@
+---
+- name: Set up vpn networks
+  hosts: deployment_nodes
+  gather_facts: yes
+  any_errors_fatal: true
+  tasks:
+    - name: Check if vpn container exists
+      shell: docker ps -a | grep -q provider_gateway_keepalived
+      failed_when: false
+      changed_when: false
+      register: docker_ps_provider_gateway_keepalived
+
+    - name: Generate random password string on first node
+      set_fact:
+        keepalived_key: "{{ lookup('password', '/dev/null chars=ascii_letters,digit length=24') }}"
+      when: docker_ps_provider_gateway_keepalived.rc != 0
+      no_log: true
+      when: inventory_hostname == groups['deployment_nodes'][0]
+
+    - name: initialize keepalived peers list
+      set_fact:
+        keepalived_peers: []
+
+    - name: Build list of keepalived peers
+      set_fact:
+        keepalived_peers: "{{ keepalived_peers + [ (hostvars[item].ansible_default_ipv4.address | string) ] }}"
+      loop: "{{ groups['deployment_nodes'] }}"
+      loop_control:
+        index_var: index
+      when:
+        - item != inventory_hostname
+        - docker_ps_provider_gateway_keepalived.rc != 0
+
+    - name: deploy keepalived container
+      command: |
+        docker run \
+          --name provider_gateway_keepalived -d \
+          --cap-add=NET_ADMIN --cap-add=NET_BROADCAST --cap-add=NET_RAW --net=host \
+          -e KEEPALIVED_INTERFACE=br0 \
+          -e KEEPALIVED_PASSWORD={{ hostvars[groups['deployment_nodes'][0]].keepalived_key }} \
+          -e KEEPALIVED_UNICAST_PEERS="#PYTHON2BASH:[{% for peer in keepalived_peers %}'{{ peer }}'{% if not loop.last %},{% endif %}{% endfor %}]" \
+          -e KEEPALIVED_VIRTUAL_IPS="#PYTHON2BASH:['{{ network_provider_gateway_vip }}']" \
+          osixia/keepalived:2.0.20
+      when: docker_ps_provider_gateway_keepalived.rc != 0
+
+    - name: Wait for keepalived to come up
+      pause:
+        seconds: 5
+      when: docker_ps_provider_gateway_keepalived.rc != 0
+
+    - name: Test provider vip connectivity
+      command: ping -c 3 {{ network_provider_gateway_vip | ansible.netcommon.ipaddr('address') }}
+
+    - name: Ensure vip exists only on one node
+      command: ping -c 3 {{ network_provider_gateway_vip | ansible.netcommon.ipaddr('address') }}

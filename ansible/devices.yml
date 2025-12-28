@@ -35,55 +35,6 @@
         update_cache: yes
         cache_valid_time: 3600
 
-    - name: Download docker install script
-      command: curl -fsSL https://get.docker.com -o /root/get-docker.sh
-      args:
-        creates: /usr/bin/docker
-
-    - name: Install docker
-      command: sh /root/get-docker.sh
-      args:
-        creates: /usr/bin/docker
-
-    - name: Overwrite docker source
-      copy:
-        dest: /etc/apt/sources.list.d/docker.sources
-        content: |
-          # Ansible managed
-
-          Types: deb
-          URIs: https://download.docker.com/linux/ubuntu
-          Suites: jammy
-          Components: stable
-          Signed-by: /etc/apt/keyrings/docker.asc
-
-    - name: Ensure docker apt key is imported
-      ansible.builtin.apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-
-    - name: Enable docker api over tcp
-      shell: |
-        mkdir -p /etc/systemd/system/docker.service.d
-        cat > /etc/systemd/system/docker.service.d/override.conf <<EOF
-        [Service]
-        ExecStart=
-        ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2375 --containerd=/run/containerd/containerd.sock
-        EOF
-      args:
-        creates: /etc/systemd/system/docker.service.d/override.conf
-      register: reconfigure_docker
-
-    - name: Enable docker service
-      systemd:
-        name: docker.service
-        state: restarted
-        enabled: yes
-        daemon_reload: yes
-      when: reconfigure_docker.changed
-
-    - name: Ensure docker doesn't set policy to DROP (one time)
-      command: iptables --policy FORWARD ACCEPT
-
     - name: Configure hostname
       hostname:
         name: "{{ inventory_hostname }}"

@@ -18,8 +18,14 @@ prepare-ansible:
 harden:
 	ansible-playbook ansible/harden.yml $(ARGS)
 
+docker:
+	ansible-playbook ansible/docker.yml $(ARGS)
+
 vpn: 
 	ansible-playbook ansible/vpn.yml $(ARGS)
+
+provider-gateway-vip: 
+	ansible-playbook ansible/provider_gateway_vip.yml $(ARGS)
 
 devices-configure:
 	ansible-playbook ansible/devices.yml $(ARGS)
@@ -104,7 +110,7 @@ openstack-remove-test-resources:
 
 init: prepare-ansible
 
-infra-up: harden vpn devices-configure checks cephadm-deploy 
+infra-up: harden docker vpn devices-configure provider-gateway-vip checks cephadm-deploy 
 
 kollaansible-up: kollaansible-images kollaansible-prepare kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
 

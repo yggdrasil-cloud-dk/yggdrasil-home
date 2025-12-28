@@ -4,58 +4,6 @@
   gather_facts: yes
   any_errors_fatal: true
   tasks:
-    # - name: Gather facts from deployment nodes
-    #   ansible.builtin.setup:
-    #   delegate_to: "{{ item }}"
-    #   delegate_facts: true
-    #   loop: "{{ groups['deployment_nodes'] }}"
-
-    - name: Create docker directory
-      command: mkdir -p /etc/docker
-      args:
-        creates: /etc/docker
-
-    - name: Check if docker daemon.json exists
-      stat:
-        path: /etc/docker/daemon.json
-      register: docker_daemon_json
-
-    - name: Add options to docker daemon.json
-      copy:
-        dest: /etc/docker/daemon.json
-        content: |
-          {
-              "bridge": "none",
-              "ip-forward": false,
-              "ip-forward-no-drop": true,
-              "iptables": false,
-              "live-restore": true,
-              "log-opts": {
-                  "max-file": "5",
-                  "max-size": "50m"
-              }
-          }
-      when: not docker_daemon_json.stat.exists
-      register: docker_daemon_json_configured
-
-    - name: Download docker install script
-      command: curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
-      args:
-        creates: /tmp/get-docker.sh
-
-    - name: Install docker
-      command: sh /tmp/get-docker.sh
-      args:
-        creates: /usr/bin/docker
-      register: docker_installed
-
-    - name: Ensure docker service is started and enabled
-      systemd:
-        name: docker
-        state: restarted
-        enabled: yes
-      when: docker_installed or docker_daemon_json_configured.changed
-
     - name: Check if vpn container exists
       shell: docker ps -a | grep -q peervpn
       failed_when: false
@@ -105,7 +53,7 @@
         seconds: 5
       when: docker_ps_peervpn.rc != 0
 
-    - name: Test vpn connectivitiy
+    - name: Test vpn connectivity
       command: ping -c 3 {{ hostvars[vpn_peer_node].vpn_ip | ansible.netcommon.ipaddr('address') }}
       loop: "{{ groups['deployment_nodes'] }}"
       loop_control:
