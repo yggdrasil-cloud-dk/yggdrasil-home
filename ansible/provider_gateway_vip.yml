@@ -54,7 +54,7 @@
       changed_when: false
 
     - name: Ensure vip exists only on one node
-      shell: ip a | grep {{ network_provider_gateway_keepalived_vip | ansible.netcommon.ipaddr('address') }}
+      shell: ip a | grep {{ network_provider_gateway_keepalived_vip | ansible.netcommon.ipaddr('address') }}/32
       changed_when: false
       failed_when: false
       register: vip_check
@@ -71,7 +71,7 @@
       loop: "{{ groups['deployment_nodes'] }}"
       run_once: true
 
-    - name: Fail if vip exists on more than one node
+    - name: Fail if vip doesn't exists exactly once
       fail:
         msg: "The provider gateway VIP {{ network_provider_gateway_keepalived_vip | ansible.netcommon.ipaddr('address') }} exists {{ vip_count }} times! It should exist only once."
       when: 
