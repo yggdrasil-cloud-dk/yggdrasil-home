@@ -48,19 +48,20 @@
           Components: stable
           Signed-by: /etc/apt/keyrings/docker.asc
 
-    - name: Ensure docker apt key is imported
-      ansible.builtin.apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-
-    - name: Download docker install script
-      command: curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    - name: Download docker GPG key
+      shell: |
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc && chmod a+r /etc/apt/keyrings/docker.asc
       args:
-        creates: /tmp/get-docker.sh
+        creates: /etc/apt/keyrings/docker.asc
 
     - name: Install docker
-      command: sh /tmp/get-docker.sh
-      args:
-        creates: /usr/bin/docker
+      apt:
+        package:
+          - docker-ce 
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
       register: docker_installed
 
     - name: Ensure docker service is started and enabled
