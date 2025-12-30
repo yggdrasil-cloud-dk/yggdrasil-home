@@ -191,11 +191,11 @@ EOF
 # TODO: NOT SURE OF THESE VALUES
 cat >  etc/kolla/config/neutron.conf <<EOF
 [DEFAULT]
-global_physnet_mtu = 1400
+global_physnet_mtu = $OPENSTACK_PHYSNET_MTU
 dns_servers = 1.1.1.1,8.8.8.8
 EOF
 cat > $config_dir/ml2_conf.ini <<EOF
-path_mtu = 1400
+path_mtu = $OPENSTACK_PATH_MTU
 EOF
 
 

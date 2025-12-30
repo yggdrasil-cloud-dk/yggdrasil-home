@@ -55,6 +55,8 @@
         OPENSTACK_CEPH_RGW_HOSTS: "{{ openstack_ceph_rgw_hosts }}"
         OPENSTACK_WORKER_COUNT: "{{ openstack_worker_count }}"
         OPENSTACK_AMPHORA_SUBNET_CIDR: "{{ openstack_amphora_network.cidr }}"
+        OPENSTACK_PHYSNET_MTU: "{{ openstack_physnet_mtu | default(1500) }}"
+        OPENSTACK_PATH_MTU: "{{ openstack_physnet_mtu | default(1500) }}"
 
     - name: Run kolla-ansible
       debug:
