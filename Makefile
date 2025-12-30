@@ -114,13 +114,13 @@ infra-up: harden docker vpn devices-configure provider-gateway-vip checks cephad
 
 kollaansible-up: kollaansible-images kollaansible-prepare kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
 
-postdeploy: kollaansible-postdeploy openstack-client-install openstack-resources-init openstack-images-upload symlink-etc-kolla  openstack-services
+postdeploy-up: kollaansible-postdeploy openstack-client-install openstack-resources-init openstack-images-upload symlink-etc-kolla  openstack-services
 
-all-up: infra-up kollaansible-up postdeploy
+all-up: infra-up kollaansible-up postdeploy-up
 
 all-upgrade: kollaansible-upgrade
 
-dev-up: vagrant-up all-up all-postdeploy
+dev-up: vagrant-up all-up
 
 dev-down: vagrant-destroy
 
