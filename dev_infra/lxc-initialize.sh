@@ -34,4 +34,3 @@ projects: []
 cluster: null
 EOF
 
-lxc launch --vm --config limits.cpu=4 --config limits.memory=32GB ubuntu:jammy aio
