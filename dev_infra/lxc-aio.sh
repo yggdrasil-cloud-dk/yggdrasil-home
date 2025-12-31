@@ -8,7 +8,7 @@ systemctl restart ssh
 EOT
 )
 
-lxc launch --vm --config limits.cpu=4 --config limits.memory=32GB --device root,size=100GiB \
+lxc launch --vm --config limits.cpu=2 --config limits.memory=32GB --device root,size=100GiB \
   --config  cloud-init.user-data="$user_data"  \
   ubuntu-jammy-generic aio
 
