@@ -3,10 +3,15 @@
   hosts: deployment_nodes
   gather_facts: false
   tasks:
+
+    - name: Set image version based on openstack_release
+      set_fact:
+        image_version: "{{ openstack_release }}-ubuntu-{% if openstack_release == '2025.2' %}noble{% else %}jammy{% endif %}"
+
     - name: Set images fact
       set_fact:
         images:
-          - image: quay.io/openstack.kolla/nova-novncproxy:{{ openstack_release }}-ubuntu-jammy
+          - image: quay.io/openstack.kolla/nova-novncproxy:{{ image_version }}
             custom_cmds: |
               sed -i '123i\ \ \ \ \ \ \ \ expected_protos.append(\"https\")' /var/lib/kolla/venv/lib/python3.10/site-packages/nova/console/websocketproxy.py
           - image: quay.io/openstack.kolla/horizon:{{ openstack_release }}-ubuntu-jammy
@@ -128,6 +133,15 @@
               sed -i 's/\[Service\]/StartLimitIntervalSec=500\nStartLimitBurst=5\n[Service]\nRestart=on-failure\nRestartSec=5s/g' \
               /var/lib/kolla/venv/lib/python3.10/site-packages/magnum/drivers/common/templates/kubernetes/fragments/configure-etcd.sh
               pip uninstall -y magnum-cluster-api
+      when: openstack_release != '2025.2'
+
+    - name: Set images fact
+      set_fact:
+        images:
+           - image: quay.io/openstack.kolla/mariadb-server:{{ image_version }}
+             custom_cmds: |
+               ln -sf /usr/bin/mariadb /usr/bin/mysql
+      when: openstack_release == '2025.2'
 
     - name: Pull images
       shell: |

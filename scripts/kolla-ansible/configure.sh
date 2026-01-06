@@ -83,7 +83,7 @@ set_global_config enable_manila_backend_generic yes
 #set_global_config enable_masakari yes  # hacluster must be enabled - but this is an aio
 set_global_config enable_mistral yes
 #set_global_config enable_murano yes  # broken in 2023.2 for some reason
-set_global_config enable_neutron_vpnaas yes
+#set_global_config enable_neutron_vpnaas yes  # broken in 2025.1
 set_global_config enable_octavia yes
 set_global_config enable_prometheus yes
 #set_global_config enable_redis yes
@@ -138,19 +138,19 @@ cat >  etc/kolla/config/trove.conf <<EOF
 [DEFAULT]
 max_accepted_volume_size = 50
 
-[oslo_messaging_rabbit]
-rabbit_quorum_queue = false
-amqp_durable_queues = true
-rabbit_ha_queues = true
+#[oslo_messaging_rabbit]
+#rabbit_quorum_queue = false
+#amqp_durable_queues = true
+#rabbit_ha_queues = true
 EOF
 mkdir -p etc/kolla/config/trove/
 cat >  etc/kolla/config/trove/trove-taskmanager.conf <<EOF
 [DEFAULT]
 nova_keypair = testkey
 
-[oslo_messaging_rabbit]
-rabbit_quorum_queue = true
-rabbit_ha_queues = false
+#[oslo_messaging_rabbit]
+#rabbit_quorum_queue = true
+#rabbit_ha_queues = false
 EOF
 
 # designate
