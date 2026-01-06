@@ -57,7 +57,7 @@ kollaansible-deploy:
 	scripts/kolla-ansible/kolla-ansible.sh deploy $(ARGS) || scripts/kolla-ansible/kolla-ansible.sh deploy $(ARGS)
 
 kollaansible-upgrade:
-	scripts/kolla-ansible/kolla-ansible.sh upgrade
+	scripts/kolla-ansible/kolla-ansible.sh upgrade $(ARGS)
 
 kollaansible-postdeploy:
 	scripts/kolla-ansible/kolla-ansible.sh post-deploy
@@ -156,7 +156,7 @@ print-ansible-vars:
 	
 # missing tags that are used with "import_playbook" list nova
 print-tags:
-	@grep "^        tags:" workspace/kolla-ansible/ansible/site.yml | sed 's/        tags: //g; s/ }//g; s/,.*//g; s/\[//g' | xargs | sed 's/ /,/g' | tee /tmp/print-tags
+	@grep "^        tags:" workspace/kolla-ansible/ansible/site.yml | sed 's/        tags: //g; s/ }//g; s/,.*//g; s/\[//g' | xargs | sed 's/ /,/g' | sed 's/,ovn,ovn/,ovn,nova/' |  tee /tmp/print-tags
 
 kollaansible-tags-deploy: kollaansible-prepare
 	scripts/kolla-ansible/kolla-ansible.sh deploy -t $(TAGS)
@@ -169,6 +169,11 @@ kollaansible-fromtag-deploy: kollaansible-prepare print-tags
 	all_tags=$$(cat /tmp/print-tags) && \
 	remaining_tags=$$(echo $$all_tags | grep -o $(TAGS).*) && \
 	scripts/kolla-ansible/kolla-ansible.sh deploy -t $$remaining_tags
+
+kollaansible-fromtag-upgrade: kollaansible-prepare print-tags
+	all_tags=$$(cat /tmp/print-tags) && \
+	remaining_tags=$$(echo $$all_tags | grep -o $(TAGS).*) && \
+	scripts/kolla-ansible/kolla-ansible.sh upgrade -t $$remaining_tags
 
 kollaansible-up-upgrade: kollaansible-images kollaansible-prepare kollaansible-prechecks kollaansible-upgrade kollaansible-lma
 
