@@ -24,10 +24,13 @@
           - ceph-common
       when: inventory_hostname in groups['deployment_controller']
 
-    - name: Create ceph directory
+    - name: Create ceph directories
       file:
-        path: /etc/ceph/
+        path: "{{ item}}"
         state: directory
+      loop:
+        - /etc/ceph/
+        - /var/lib/cephadm/.ssh/
 
 - name: Deploy cephadm
   hosts: deployment_nodes[0]
