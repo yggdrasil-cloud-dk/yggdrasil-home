@@ -41,8 +41,11 @@ cephadm-deploy:
 kollaansible-images:
 	ansible-playbook ansible/prepare_images.yml $(ARGS)
 
-kollaansible-prepare:
+kollaansible-prepare-full:
 	ansible-playbook ansible/kolla_ansible.yml $(ARGS)
+
+kollaansible-prepare:
+	ansible-playbook ansible/kolla_ansible.yml -t configure $(ARGS)
 
 kollaansible-create-certs:
 	scripts/kolla-ansible/kolla-ansible.sh octavia-certificates
@@ -112,7 +115,7 @@ init: prepare-ansible
 
 infra-up: harden docker vpn devices-configure provider-gateway-vip checks cephadm-deploy 
 
-kollaansible-up: kollaansible-images kollaansible-prepare kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
+kollaansible-up: kollaansible-images kollaansible-prepare-full kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
 
 postdeploy-up: kollaansible-postdeploy openstack-client-install openstack-resources-init openstack-images-upload symlink-etc-kolla  openstack-services
 

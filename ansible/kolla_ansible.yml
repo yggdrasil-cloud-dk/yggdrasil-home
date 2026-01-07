@@ -15,6 +15,15 @@
       environment:
         OPENSTACK_RELEASE: "{{ openstack_release }}"
 
+    - name: Add inventory for deployment controller
+      copy: 
+        dest: "{{ playbook_dir }}/../workspace/inventory/00-deployment"
+        content: |
+          {{ inventory_hostname }} ansible_host={{ ansible_host }} ansible_connection=local
+
+          [deployment]
+          {{ inventory_hostname }}
+
     - name: Add inventory for nodes
       copy: 
         dest: "{{ playbook_dir }}/../workspace/inventory/0{{ hostvars[item].inventory_index }}-{{ item }}"
@@ -35,11 +44,6 @@
 
           [monitoring]
           {{ item }}
-
-          {% if item == inventory_hostname %}
-          [deployment]
-          {{ item }}
-          {% endif %}
       loop: "{{ groups['deployment_nodes'] }}"
 
     - name: Configure kolla-ansible
@@ -57,6 +61,7 @@
         OPENSTACK_AMPHORA_SUBNET_CIDR: "{{ openstack_amphora_network.cidr }}"
         OPENSTACK_PHYSNET_MTU: "{{ openstack_physnet_mtu | default(1500) }}"
         OPENSTACK_PATH_MTU: "{{ openstack_physnet_mtu | default(1500) }}"
+      tags: configure
 
     - name: Run kolla-ansible
       debug:
