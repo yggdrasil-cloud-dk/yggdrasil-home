@@ -142,8 +142,15 @@
             custom_cmds: |
               ln -sf /usr/bin/mariadb /usr/bin/mysql
           - image: quay.io/openstack.kolla/nova-novncproxy:{{ image_version }}
+            # TODO: Does I need to chown root:root below because I'm the image edits
+            # This edits become node-specific so can't be shared image
             custom_cmds: |
-              sed -i \"s/'ws' in expected_protos/true/g;s/'wss' in expected_protos/true/g\" /var/lib/kolla/venv/lib/python3.12/site-packages/nova/console/websocketproxy.py 
+              sed -i \"s/'ws' in expected_protos/True/g;s/'wss' in expected_protos/True/g\" /var/lib/kolla/venv/lib/python3.12/site-packages/nova/console/websocketproxy.py
+              cat > /usr/local/bin/kolla_nova_extend_start <<'EOF'
+              touch /dev/shm/$(hostname)_nova-novncproxy_qmanager
+              chown root:root /dev/shm/$(hostname)_nova-novncproxy_qmanager
+              chmod 644 /dev/shm/$(hostname)_nova-novncproxy_qmanager
+              EOF
       when: (openstack_release|string) == '2025.2'
 
     - name: Pull images
