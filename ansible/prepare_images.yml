@@ -143,7 +143,7 @@
               ln -sf /usr/bin/mariadb /usr/bin/mysql
           - image: quay.io/openstack.kolla/nova-novncproxy:{{ image_version }}
             custom_cmds: |
-              sed -i \"s/'ws' in expected_protos:/true/g;s/'wss' in expected_protos/true/g\" /var/lib/kolla/venv/lib/python3.12/site-packages/nova/console/websocketproxy.py 
+              sed -i \"s/'ws' in expected_protos/true/g;s/'wss' in expected_protos/true/g\" /var/lib/kolla/venv/lib/python3.12/site-packages/nova/console/websocketproxy.py 
       when: (openstack_release|string) == '2025.2'
 
     - name: Pull images
