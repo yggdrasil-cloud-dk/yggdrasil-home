@@ -39,7 +39,7 @@ openstack coe cluster template create k8s-cluster-template-$suffix \
     --network-driver calico \
     --docker-storage-driver overlay2 \
     --coe kubernetes \
-    --labels kube_tag=v1.28.9-rancher1,container_runtime=containerd,containerd_version=1.6.31,containerd_tarball_sha256=75afb9b9674ff509ae670ef3ab944ffcdece8ea9f7d92c42307693efa7b6109d,cloud_provider_tag=v1.27.3,cinder_csi_plugin_tag=v1.27.3,k8s_keystone_auth_tag=v1.27.3,magnum_auto_healer_tag=v1.27.3,octavia_ingress_controller_tag=v1.27.3,calico_tag=v3.26.4
+    --labels kube_tag=v1.28.9-rancher1,container_runtime=containerd,containerd_version=1.6.31,containerd_tarball_sha256=75afb9b9674ff509ae670ef3ab944ffcdece8ea9f7d92c42307693efa7b6109d,cloud_provider_tag=v1.27.3,cinder_csi_plugin_tag=v1.27.3,k8s_keystone_auth_tag=v1.27.3,magnum_auto_healer_tag=v1.27.3,octavia_ingress_controller_tag=v1.27.3,calico_tag=v3.26.4,min_node_count=1
 
 openstack coe cluster create k8s-cluster-$suffix \
     --cluster-template k8s-cluster-template-$suffix \
