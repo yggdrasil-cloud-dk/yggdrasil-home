@@ -2,7 +2,7 @@
 
 set -x
 
-apt install -y libopenscap8 bzip2
+apt install -y openscap-scanner bzip2
 
 release=$(lsb_release -cs)
 

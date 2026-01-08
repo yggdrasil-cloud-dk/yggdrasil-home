@@ -6,7 +6,7 @@
     - name: Install apt packages
       apt:
         name:
-          - libopenscap8
+          - openscap-scanner
           - bzip2
           - fail2ban
           - clamav
@@ -22,6 +22,7 @@
         dest: /opt/
         mode: preserve
       tags: copy_only
+      register: copy_hardening
 
     - name: Find hardening files
       find:
@@ -53,6 +54,7 @@
           {% for file in hardening_files %}
           {{ file }}
           {% endfor %}
+      register: rc_local_file
 
     - name: Systemd Daemon reload
       systemd:
@@ -61,10 +63,11 @@
     # running as shell command because with systemd we get some "D-Bus terminated - connection reset by peer" issue
     # Might have to do with the vulnerability scanning?
     - name: Start rc-local service
-      shell: systemctl start rc-local
+      shell: systemctl restart rc-local
       async: 300  # 5 minutes
       poll: 0
       register: start_rclocal
+      when: rc_local_file.changed or copy_hardening.changed
 
     - name: Wait until rc-local service run is complete
       command: systemctl is-active rc-local
@@ -72,12 +75,15 @@
       until: rc_local_is_active.stdout == 'active' or rc_local_is_active.stdout == 'failed'
       retries: 60
       delay: 10
+      when: rc_local_file.changed or copy_hardening.changed
 
     - name: Ensure rc.local active
       assert:
         that: rc_local_is_active.stdout != 'failed'
+      when: rc_local_file.changed or copy_hardening.changed
 
     - name: Clean up async file
       ansible.builtin.async_status:
         jid: '{{ start_rclocal.ansible_job_id }}'
         mode: cleanup
+      when: rc_local_file.changed or copy_hardening.changed
