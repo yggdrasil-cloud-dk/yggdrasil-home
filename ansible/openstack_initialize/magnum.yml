@@ -27,20 +27,13 @@
           qemu-img convert $image.qcow2 $image.raw
           openstack image create $image \
             --progress \
-            --container-format bare \
-            --disk-format raw \
-            --private \
-            --tag amphora \
-            --file $image.raw \
-            --property hw_architecture='x86_64' \
-            --property hw_rng_model=virtio \
-            --project service
+            --public \
+            --property os_distro=fedora-coreos --property os_type=linux --property os_version=38 \
+            --property os_admin_user=root
           rm -f $image.*
         )
 
         fedora_image="$image"
-
-        openstack image set --property os_distro=fedora-coreos $fedora_image
 
         ls ~/.ssh/id_rsa.pub || ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
 

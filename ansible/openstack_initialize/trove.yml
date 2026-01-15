@@ -29,12 +29,6 @@
             --progress \
             --container-format bare \
             --disk-format raw \
-            --private \
-            --tag amphora \
-            --file $image.raw \
-            --property hw_architecture='x86_64' \
-            --property hw_rng_model=virtio \
-            --project service
           rm -f $image.*
         )
 

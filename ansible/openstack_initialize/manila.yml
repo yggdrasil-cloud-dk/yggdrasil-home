@@ -32,17 +32,17 @@
           rm -f $file*
         )
 
-        openstack flavor show manila-service-flavor || openstack flavor create --id 100 --ram 2048 --disk 30 --vcpus 2 manila-service-flavor
+        openstack flavor show manila-service-flavor || openstack flavor create --id 100 --ram 2048 --disk 30 --vcpus 2 manila-service-flavor --private
 
       args:
         chdir: "{{ playbook_dir }}/../.."
         executable: /bin/bash
 
-- name: Test magnum
+- name: Test Manila
   hosts: deployment_controller
   any_errors_fatal: true
   tasks:
-    - name: Create test magnum cluster
+    - name: Create test share
       shell: |
         #!/bin/bash
 
