@@ -11,52 +11,31 @@ CONFIG_DIR=$(pwd)/etc/kolla
 # source admin rc
 . $CONFIG_DIR/admin-openrc.sh
 
-image_name=$(openstack image list -f value -c Name | grep trove)
+source ../scripts/openstack/image-utils.sh
+
+image=trove-master-guest-ubuntu-noble
+
+commands="sed -i \
+-e '/LOG.info(f\"Creating database {database.name}\")/a\' \
+-e '        database.collate = \"en_US.utf8\"' \
+/opt/guest-agent-venv/lib/python3.12/site-packages/trove/guestagent/datastore/postgres/service.py"
+
+create_openstack_linux_image https://tarballs.opendev.org/openstack/trove/images/$image.qcow2 \
+  $image \
+  "$commands" \
+  "--property hw_rng_model='virtio'"
+
+image_name=$image
 
 openstack image set --private  \
     --tag trove --tag postgres --tag mysql $image_name
 
-
 openstack keypair show --user trove testkey || openstack keypair create --public-key ~/.ssh/id_rsa.pub --user trove testkey
 
-openstack datastore version show --datastore postgresql 12.18 || openstack datastore version create 12.18 postgresql postgresql "" \
+openstack datastore version show --datastore postgresql 17 || openstack datastore version create 17 postgresql postgresql "" \
     --image-tags trove,postgres \
     --active --default
 
-suffix=$RANDOM
-openstack database instance create postgresql_instance_$suffix \
-    --flavor m1.medium \
-    --size 5 \
-    --nic net-id=$(openstack network show demo-net -f value -c id) \
-    --databases test --users userA:password \
-    --datastore postgresql --datastore-version 12.18 \
-    --replica-count 1 \
-    --is-public \
-    --allowed-cidr 0.0.0.0/0
-
-
-sleep 60
-
-set +x
-
-timeout_seconds=300
-sleep_time=10
-ready_status=ACTIVE
-wip_status=BUILD
-time=0
-while true; do
-  status=$(openstack database instance show postgresql_instance_$suffix -f value -c status)
-  if [[ $time -gt $timeout_seconds ]]; then
-    echo Timeout reached - exiting
-    exit 1
-  elif echo $status | grep -q $ready_status; then
-    echo Now available
-    break
-  elif echo $status | grep -qv $wip_status ; then
-    echo Unexpected status
-    exit 1
-  fi
-  echo Trove: Waiting for resource...
-  time=$(( $time + $sleep_time ))
-  sleep $sleep_time
-done
+openstack datastore version show --datastore mysql 8.4 || openstack datastore version create 8.4 mysql mysql "" \
+    --image-tags trove,mysql \
+    --active --default

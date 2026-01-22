@@ -102,7 +102,7 @@ openstack-manila:
 #	scripts/tests/manila.sh
 	ansible-playbook ansible/openstack_initialize/manila.yml $(ARGS)
 
-openstack-trove-postgres:
+openstack-trove:
 #	scripts/tests/trove_postgres.sh
 	ansible-playbook ansible/openstack_initialize/trove.yml $(ARGS)
 
@@ -120,7 +120,7 @@ infra-up: harden docker vpn devices-configure provider-gateway-vip checks cephad
 
 kollaansible-up: kollaansible-images kollaansible-prepare-full kollaansible-create-certs kollaansible-bootstrap kollaansible-prechecks kollaansible-deploy kollaansible-lma
 
-postdeploy-up: kollaansible-postdeploy openstack-client-install openstack-resources-init openstack-images-upload symlink-etc-kolla  openstack-services
+postdeploy-up: kollaansible-postdeploy openstack-client-install openstack-resources-init symlink-etc-kolla openstack-services
 
 all-up: infra-up kollaansible-up postdeploy-up
 
@@ -132,7 +132,8 @@ dev-down: vagrant-destroy
 
 openstack-services:
 	ls ~/.ssh/id_rsa.pub || ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -q -N ""
-	$(MAKE) -j 5 -Oline openstack-octavia openstack-rgw openstack-magnum  openstack-manila openstack-trove-postgres
+	$(MAKE) -j 10 -Oline openstack-images-upload openstack-octavia openstack-rgw openstack-magnum  openstack-manila openstack-trove
+	source scripts/image-utils.sh && image_cleanup
 #	$(MAKE) openstack-remove-test-resources
 
 
