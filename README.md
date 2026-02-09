@@ -2,13 +2,20 @@
 
 ### On local Computer: ###
 
+TIP: Set these vars:
+```
+HOSTNAME=
+IP=
+INITIALUSER=
+```
+
 1. Setup server from Hetzner GUI with password authentication
 
 2. On local computer, ensure hyper01 (for OVH) and os02 (for Hetzner) is added: 
 ```
 # hetzner
-Host hyper01-hetzner
-    Hostname 144.76.28.49
+Host $HOSTNAME
+    Hostname $IP
     User root
     ForwardAgent yes
 EOF
@@ -21,21 +28,27 @@ git clone git@bitbucket.org:mgindi/kolla-deploy.git && cd kolla-deploy
 
 4. Run script to setup remote server
 ```
-./setup_remote_os_server.sh hyper01-hetzner
+./setup_remote_os_server.sh $HOSTNAME $INITIALUSER
 ```
 
 5. Copy secret files
 ```
-scp -o StrictHostKeyChecking=no ~/brevo.rc hyper01-hetzner:~/brevo.rc
-scp -o StrictHostKeyChecking=no ~/hetzner-storagebox.pass hyper01-hetzner:~/hetzner-storagebox.pass
+scp -o StrictHostKeyChecking=no ~/brevo.rc $HOSTNAME:~/brevo.rc
+scp -o StrictHostKeyChecking=no ~/hetzner-storagebox.pass $HOSTNAME:~/hetzner-storagebox.pass
 ```
 
 6. Connect to remote server
 ```
-ssh hyper01-hetzner
+ssh $HOSTNAME
 ```
 
 ### On Remote Server: ###
+
+TIP: Set these vars:
+```
+git_user=
+git_email=
+```
 
 6. Setup prerequisites
 ```
@@ -59,8 +72,8 @@ echo 'SSH_AUTH_SOCK=/root/.ssh/ssh_auth_sock' > ~/.ssh/environment
 cd ~
 ls kolla-deploy || GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@bitbucket.org:mgindi/kolla-deploy.git
 cd kolla-deploy
-git config --global user.email "mo.gindi@gmail.com"
-git config --global user.name "Mohamed El Gindi"
+git config --global user.email $git_email
+git config --global user.name $git_user
 git pull
 
 EOF
