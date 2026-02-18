@@ -71,7 +71,7 @@ set_global_config enable_aodh yes
 set_global_config enable_barbican yes
 set_global_config enable_ceilometer yes
 set_global_config enable_central_logging yes  # takes lots of resources
-#set_global_config enable_cloudkitty yes  # deployment broken - something about no cloudkitty database found
+set_global_config enable_cloudkitty yes  # deployment broken - something about no cloudkitty database found
 set_global_config enable_designate yes
 set_global_config enable_freezer yes
 set_global_config enable_gnocchi yes
@@ -103,6 +103,8 @@ set_global_config docker_custom_config '{ "live-restore": true, "ip-forward-no-d
 
 set_global_config octavia_provider_drivers '"amphora:Amphora provider, ovn:OVN provider"'
 set_global_config octavia_amp_network_cidr $OPENSTACK_AMPHORA_SUBNET_CIDR
+
+set_global_config cloudkitty_storage_backend opensearch
 
 set_global_config enable_ceph_rgw yes
 set_global_config ceph_rgw_hosts "$OPENSTACK_CEPH_RGW_HOSTS"
