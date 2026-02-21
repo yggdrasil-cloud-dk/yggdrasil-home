@@ -12,49 +12,20 @@ CONFIG_DIR=$(pwd)/etc/kolla
 cloudkitty module list
 
 cloudkitty module disable pyscripts
-
+openstack rating module enable hashmap
 cloudkitty module set priority hashmap 100
 
-# instance up time
+openstack role add rating --project admin --user cloudkitty
 
-cloudkitty hashmap group list -f value | grep -q instance_uptime_flavor_id || cloudkitty hashmap group create instance_uptime_flavor_id
-
-gid=$(cloudkitty hashmap group list -f value | grep instance_uptime_flavor_id | awk '{print $2}')
-
-cloudkitty hashmap service list -f value | grep -q instance || cloudkitty hashmap service create instance
-
-sid=$(cloudkitty hashmap service list -f value | grep instance | awk '{print $2}')
-
-cloudkitty hashmap field list $sid -f value | grep -q flavor_id || cloudkitty hashmap field create $sid flavor_id
-
-fid=$(cloudkitty hashmap field list $sid -f value | grep flavor_id | awk '{print $2}')
+group_id=$(cloudkitty hashmap group create instance_uptime_flavor_id -f value -c "Group ID")
+service_id=$(cloudkitty hashmap service create instance -f value -c "Service ID")
+field_id=$(cloudkitty hashmap field create $service_id flavor_id -f value -c "Field ID")
 
 flavor_id=$(openstack flavor show m1.tiny -f value -c id)
 
-cloudkitty hashmap mapping list -g $gid -f value | grep -q $flavor_id || cloudkitty hashmap mapping create 0.01 \
- --field-id $fid \
+cloudkitty hashmap mapping create 0.01 \
+ --field-id $field_id \
  --value $flavor_id \
- -g $gid \
+ -g $group_id \
  -t flat
 
-# volume per gb
-
-cloudkitty hashmap group list | grep -q volume_thresholds || cloudkitty hashmap group create volume_thresholds
-
-gid=$(cloudkitty hashmap group list -f value | grep volume_thresholds | awk '{print $2}')
-
-cloudkitty hashmap service list | grep -q volume.size || cloudkitty hashmap service create volume.size
-
-sid=$(cloudkitty hashmap service list -f value | grep volume.size | awk '{print $2}')
-
-cloudkitty hashmap mapping list -g $gid -f value | grep -q $sid || cloudkitty hashmap mapping create 0.001 \
- -s $sid \
- -g $gid \
- -t flat
-
-openstack project show test || openstack project create test
-
-openstack user show test || openstack user create test --password test
-
-openstack role add --user test --project test rating
-openstack role add --user test --project test member
