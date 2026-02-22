@@ -29,3 +29,11 @@ cloudkitty hashmap mapping create 0.01 \
  -g $group_id \
  -t flat
 
+
+# test cloudkitty is working
+
+#openstack rating report tenant list
+
+#openstack rating dataframes get -p <proj_id>
+#openstack rating summary get -t <proj_id>
+#openstack rating total get -t <proj_id>
