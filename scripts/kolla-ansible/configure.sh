@@ -97,7 +97,7 @@ set_global_config enable_trove yes
 set_global_config enable_venus yes
 #set_global_config enable_vitrage yes
 set_global_config enable_watcher yes
-#set_global_config enable_zun yes  # not supported in 2023.2
+set_global_config enable_zun yes
 
 set_global_config docker_custom_config '{ "live-restore": true, "ip-forward-no-drop": true }'
 
