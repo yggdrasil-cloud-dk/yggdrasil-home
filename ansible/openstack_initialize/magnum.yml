@@ -29,7 +29,8 @@
             --progress \
             --public \
             --property os_distro=fedora-coreos --property os_type=linux --property os_version=38 \
-            --property os_admin_user=root
+            --property os_admin_user=root \
+            --file $image.raw
           rm -f $image.*
         )
 
