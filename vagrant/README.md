@@ -2,7 +2,7 @@
 
 ## 1. Run as root
 ```
-cd kolla-deploy/vagrant
+cd yggdrasil_home/vagrant
 sudo ./setup.sh
 
 vagrant up

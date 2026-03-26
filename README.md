@@ -23,7 +23,7 @@ EOF
 
 3. Clone this repo
 ```
-git clone git@bitbucket.org:mgindi/kolla-deploy.git && cd kolla-deploy
+git clone git@github.com:mogindi/yggdrasil_home.git && cd yggdrasil_home
 ```
 
 4. Run script to setup remote server
@@ -70,8 +70,8 @@ systemctl restart ssh
 echo 'SSH_AUTH_SOCK=/root/.ssh/ssh_auth_sock' > ~/.ssh/environment
 
 cd ~
-ls kolla-deploy || GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@bitbucket.org:mgindi/kolla-deploy.git
-cd kolla-deploy
+ls yggdrasil_home || GIT_SSH_COMMAND="ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no" git clone git@github.com:mogindi/yggdrasil_home.git
+cd yggdrasil_home
 git config --global user.email $git_email
 git config --global user.name $git_user
 git pull
@@ -80,7 +80,7 @@ EOF
 
 bash ~/.ssh/rc
 export SSH_AUTH_SOCK=/root/.ssh/ssh_auth_sock
-cd kolla-deploy
+cd yggdrasil_home
 tmux
 ```
 
