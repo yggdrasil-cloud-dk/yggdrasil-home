@@ -1,6 +1,6 @@
-# Open Yggdrasil Stack
+# Yggdrasil Home
 
-Open Yggdrasil Stack is an infrastructure automation repository for standing up a full OpenStack environment with:
+Yggdrasil Home is an infrastructure automation repository for standing up a full OpenStack environment with:
 
 - host preparation and hardening,
 - Docker and networking setup,
@@ -46,14 +46,14 @@ cd open-yggdrasil-stack
 
 The Makefile uses these variables:
 
-- `ENV` (default: `hetzner-vagrant-dev01`): selects inventory directory under `ansible/inventory/<ENV>`.
+- `ENV` (default: `vagrant-dual-vm`): selects inventory directory under `ansible/inventory/<ENV>`.
 - `ARGS`: extra flags passed through to some `ansible-playbook` commands.
 - `TAGS`: tags used by `kollaansible-*tag*` targets.
 
 Available inventories in-tree:
 
 - `ansible/inventory/aio`
-- `ansible/inventory/hetzner-vagrant-dev01`
+- `ansible/inventory/vagrant-dual-vm`
 
 Examples:
 
